@@ -1,1 +1,3 @@
-# C-BMP-to-ASCII-ART
+# BMP Image to ASCII Art
+\
+- incomplete
