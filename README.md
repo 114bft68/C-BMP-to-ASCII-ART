@@ -4,7 +4,7 @@
 ## Description
 it turns **uncompressed BMP** to **ASCII arts**\
 it works with **uncompressed BMP files** which have bit depths *(bits per pixel)* of:\
-    1 *(untested)*,\
+    1 (tested),\
     4 (tested),\
     8 (tested),\
     16 *(untested)*,\
@@ -12,4 +12,4 @@ it works with **uncompressed BMP files** which have bit depths *(bits per pixel)
     32 *(untested)*
 
 ## Compiling:
-    gcc bmp.c bmpLib.c -o bmp -lm
+    make
