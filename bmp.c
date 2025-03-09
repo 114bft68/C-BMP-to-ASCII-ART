@@ -26,6 +26,9 @@
 #include <errno.h>
 #include "bmpLib.h"
 
+#define CYAN "\x1B[36m"
+#define NORM "\x1B[0m"
+
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         printf("\nFormat: %s <path of the BMP image> <path of the text file to write>\n", argv[0]);
@@ -51,8 +54,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (F_H.FILE_TYPE != 0x4D42 || I_H.IMAGE_HEIGHT == 0 || !BPP_TO_BPPs_INDEX(I_H.BITS_PER_PIXEL)) {
-        // not 'BM', height == 0, or BPP_TO_BPPs_INDEX() == 0 which means the the BPP of the BMP is not supported
+    if (F_H.FILE_TYPE != 0x4D42 || I_H.IMAGE_HEIGHT == 0 || I_H.IMAGE_WIDTH <= 0 || !bPP_TO_bPPs_INDEX(I_H.BITS_PER_PIXEL)) {
+        // not 'BM',
+        // height == 0,
+        // width <= 0 (a negative height flips the image vertically but I'm not sure if a negative width does it too (I read the documentation))
+        // bPP_TO_bPPs_INDEX() == 0 which means the the bPP of the BMP is not supported
         handleError("\nPlease use a standard BMP file\n", 2, 0, 2, BMP_FILE, TEXT_FILE);
         return 1;
     }
@@ -82,14 +88,15 @@ int main(int argc, char *argv[]) {
         free(COLOR_TABLE);
     }
     
-    if (TO_ASCII(&F_H, &I_H, COLOR_TABLE, BMP_FILE, TEXT_FILE, BPPs[BPP_TO_BPPs_INDEX(I_H.BITS_PER_PIXEL) - 1])) {
-        handleError("Failure\n", 2, 1, 3, BMP_FILE, TEXT_FILE, COLOR_TABLE);
+    if (TO_ASCII(&F_H, &I_H, COLOR_TABLE, BMP_FILE, TEXT_FILE, bPPs[bPP_TO_bPPs_INDEX(I_H.BITS_PER_PIXEL) - 1])) {
+        handleError("\nFailure\n", 2, 1, 3, BMP_FILE, TEXT_FILE, COLOR_TABLE);
         return 1;
     }
     
     handleError("", 2, 1, 3, BMP_FILE, TEXT_FILE, COLOR_TABLE); // closing files before exiting (not error handling)
 
-    printf("\nSuccess\n");
+    printf("\n- Success -\nPrinted the ASCII art to the file at %s%s%s\nImage Width: %s%d%s\nImage height: %s%d%s\nImage bPP: %s%d\n",
+           CYAN, argv[2], NORM, CYAN, I_H.IMAGE_WIDTH, NORM, CYAN, I_H.IMAGE_HEIGHT, NORM, CYAN, I_H.BITS_PER_PIXEL);
 
     return 0;
 }
