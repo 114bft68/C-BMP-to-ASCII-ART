@@ -6,6 +6,7 @@
 #include "bmpLib.h"
 
 const char CHARS[] = " .-_!()^*%&#$@";
+// const char CHARS[] = "@$#&%*^)(!_-. ";
 // const char CHARS[] = ".'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
 // ^^^^^^^^^^^^^^^^^^ had to comment this out because the spell check function in text editors messed up
 #define CHARS_LEN strlen(CHARS)

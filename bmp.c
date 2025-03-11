@@ -2,8 +2,7 @@
 * Project name: Uncompressed Standard BMP to ASCII Art                                                               *
 * Language    : C                                                                                                    *
 * Comment     : I'll make it so that compressed BMP can also be converted to ASCII Art in the future                 *
-*                   (the next week perhaps)                                                                          *
-*               let me think... (line 104 in bmpLib.c)                                                               *
+*                   (the next week perhaps)                                                                          *                                                              *
 *                                                                                                                    *
 * Status      : Incomplete                                                                                           *
 *                                                                                                                    *
@@ -95,8 +94,8 @@ int main(int argc, char *argv[]) {
     
     handleError("", 2, 1, 3, BMP_FILE, TEXT_FILE, COLOR_TABLE); // closing files before exiting (not error handling)
 
-    printf("\n- Success -\nPrinted the ASCII art to the file at %s%s%s\nImage Width: %s%d%s\nImage height: %s%d%s\nImage bPP: %s%d\n",
-           CYAN, argv[2], NORM, CYAN, I_H.IMAGE_WIDTH, NORM, CYAN, I_H.IMAGE_HEIGHT, NORM, CYAN, I_H.BITS_PER_PIXEL);
+    printf("\n- Success -\nPrinted the ASCII art to the file at %s%s%s\nImage Width: %s%d%s\nImage height: %s%d%s\nImage bPP: %s%d%s\n",
+           CYAN, argv[2], NORM, CYAN, I_H.IMAGE_WIDTH, NORM, CYAN, I_H.IMAGE_HEIGHT, NORM, CYAN, I_H.BITS_PER_PIXEL, NORM);
 
     return 0;
 }
