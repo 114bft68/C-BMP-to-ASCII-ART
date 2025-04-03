@@ -259,15 +259,3 @@ int bPP_32(int bPR, signed int WIDTH, unsigned char* row, PALETTE* COLOR_TABLE, 
 }
 
 int (*bPPs[6])(int, signed int, unsigned char*, PALETTE*, FILE*) = {bPP_1, bPP_4, bPP_8, bPP_16, bPP_24, bPP_32};
-
-int bPP_TO_bPPs_INDEX(unsigned short int bpp) {
-    switch (bpp) {
-        case  1: return 1;
-        case  4: return 2;
-        case  8: return 3;
-        case 16: return 4;
-        case 24: return 5;
-        case 32: return 6;
-        default: return 0;
-    }
-}

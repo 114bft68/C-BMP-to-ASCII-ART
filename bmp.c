@@ -67,24 +67,25 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int pEntries = I_H.USED_COLOR_COUNT ? I_H.USED_COLOR_COUNT : 1 << I_H.BITS_PER_PIXEL;
-    PALETTE* COLOR_TABLE = malloc(pEntries * sizeof(PALETTE));
-    // 1 << n = pow(2, n)
-
-    if (!COLOR_TABLE) {
-        handleError("\nMemory allocation failed\n", 2, 0, 2, BMP_FILE, TEXT_FILE);
-        return 1;
-    }
+    PALETTE* COLOR_TABLE;
 
     if (I_H.BITS_PER_PIXEL <= 8) { // if bits per pixel <= 8, palette presents
+        
+        int pEntries = I_H.USED_COLOR_COUNT ? I_H.USED_COLOR_COUNT : 1 << I_H.BITS_PER_PIXEL;
+        // 1 << n = pow(2, n)
+
+        if (!(COLOR_TABLE = malloc(pEntries * sizeof(PALETTE)))) {
+
+            handleError("\nMemory allocation failed\n", 2, 0, 2, BMP_FILE, TEXT_FILE);
+            return 1;
+        }
+
         if (fread(COLOR_TABLE, sizeof(PALETTE), pEntries, BMP_FILE) < pEntries && !feof(BMP_FILE)) {
         
             handleError("\nAn error has occurred when reading from the BMP file\n", 2, 1, 3, BMP_FILE, TEXT_FILE, COLOR_TABLE);
             return 1;
         }
-    } else {
-        // that means the PALETTE doesn't exist, so you free the memory
-        free(COLOR_TABLE);
+
     }
     
     if (TO_ASCII(&F_H, &I_H, COLOR_TABLE, BMP_FILE, TEXT_FILE, bPPs[bPP_TO_bPPs_INDEX(I_H.BITS_PER_PIXEL) - 1])) {
