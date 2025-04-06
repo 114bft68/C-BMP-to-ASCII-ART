@@ -1,5 +1,5 @@
 # BMP Image to ASCII Art
-a simple **BMP** - **ASCII ART** converter
+a simple **BMP** - **ASCII ART** converter ( theoretically portable :) )
 
 ## Description
 it turns **uncompressed BMP** to **ASCII arts**\
