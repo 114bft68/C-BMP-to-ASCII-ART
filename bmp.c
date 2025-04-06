@@ -53,17 +53,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (F_H.FILE_TYPE != 0x4D42 || I_H.IMAGE_HEIGHT == 0 || I_H.IMAGE_WIDTH <= 0 || !bPP_TO_bPPs_INDEX(I_H.BITS_PER_PIXEL)) {
-        // not 'BM',
-        // height == 0,
-        // width <= 0 (a negative height flips the image vertically but I'm not sure if a negative width does it too (I read the documentation))
-        // bPP_TO_bPPs_INDEX() == 0 which means the the bPP of the BMP is not supported
-        handleError("\nPlease use a standard BMP file\n", 2, 0, 2, BMP_FILE, TEXT_FILE);
-        return 1;
-    }
+    if (!isSupported(&F_H, &I_H)) {
 
-    if (I_H.COMPRESSION) {
-        handleError("\nPlease use an uncompressed BMP file\n", 2, 0, 2, BMP_FILE, TEXT_FILE);
+        handleError("\nThe file you entered is not supported\n", 2, 0, 2, BMP_FILE, TEXT_FILE);
         return 1;
     }
 
@@ -71,7 +63,7 @@ int main(int argc, char *argv[]) {
 
     if (I_H.BITS_PER_PIXEL <= 8) { // if bits per pixel <= 8, palette presents
         
-        int pEntries = I_H.USED_COLOR_COUNT ? I_H.USED_COLOR_COUNT : 1 << I_H.BITS_PER_PIXEL;
+        uint32_t pEntries = I_H.USED_COLOR_COUNT ? I_H.USED_COLOR_COUNT : 1 << I_H.BITS_PER_PIXEL;
         // 1 << n = pow(2, n)
 
         if (!(COLOR_TABLE = malloc(pEntries * sizeof(PALETTE)))) {
@@ -89,6 +81,7 @@ int main(int argc, char *argv[]) {
     }
     
     if (TO_ASCII(&F_H, &I_H, COLOR_TABLE, BMP_FILE, TEXT_FILE, bPPs[bPP_TO_bPPs_INDEX(I_H.BITS_PER_PIXEL) - 1])) {
+
         handleError("\nFailure\n", 2, 1, 3, BMP_FILE, TEXT_FILE, COLOR_TABLE);
         return 1;
     }

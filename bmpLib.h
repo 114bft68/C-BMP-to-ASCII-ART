@@ -1,59 +1,63 @@
 #ifndef BMP_LIB
 #define BMP_LIB
+#include <stdint.h>
 
-#define bPP_TO_bPPs_INDEX(bpp) _Generic(bpp, \
-    unsigned short int: bpp ==  1 ? 1 :      \
-                        bpp ==  4 ? 2 :      \
-                        bpp ==  8 ? 3 :      \
-                        bpp == 16 ? 4 :      \
-                        bpp == 24 ? 5 :      \
-                        bpp == 32 ? 6 :      \
-                                    0 ,      \
-    default: 0                               \
-)
+#define bPP_TO_bPPs_INDEX(bpp)         \
+    _Generic(bpp,                      \
+        uint16_t: bpp ==  1 ? 1 :      \
+                  bpp ==  4 ? 2 :      \
+                  bpp ==  8 ? 3 :      \
+                  bpp == 16 ? 4 :      \
+                  bpp == 24 ? 5 :      \
+                  bpp == 32 ? 6 :      \
+                              0 ,      \
+        default: 0                     \
+    )
 
 typedef struct __attribute__((packed)) {
-    unsigned short int FILE_TYPE;
-    unsigned int       FILE_SIZE;
-    unsigned short int RESERVED0;
-    unsigned short int RESERVED1;
-    unsigned int       DATA_OFFSET;
+    uint16_t FILE_TYPE;
+    uint32_t FILE_SIZE;
+    uint16_t RESERVED0;
+    uint16_t RESERVED1;
+    uint32_t DATA_OFFSET;
 } BMP_FILE_HEADER;
 
 typedef struct __attribute__((packed)) {
-    unsigned int       FILE_HEADER_SIZE;
-    signed int         IMAGE_WIDTH;
-    signed int         IMAGE_HEIGHT;
-    unsigned short int COLOR_PLANE_COUNT;
-    unsigned short int BITS_PER_PIXEL;
-    unsigned int       COMPRESSION;
-    unsigned int       IMAGE_SIZE;
-    unsigned int       X_RESOLUTION_PPM; // PPM = Pixel Per Meter
-    unsigned int       Y_RESOLUTION_PPM;
-    unsigned int       USED_COLOR_COUNT;
-    unsigned int       IMPORTANT_COLOR_COUNT;
+    uint32_t FILE_HEADER_SIZE;
+    int32_t  IMAGE_WIDTH;
+    int32_t  IMAGE_HEIGHT;
+    uint16_t COLOR_PLANE_COUNT;
+    uint16_t BITS_PER_PIXEL;
+    uint32_t COMPRESSION;
+    uint32_t IMAGE_SIZE;
+    int32_t  X_RESOLUTION_PPM; // PPM = Pixel Per Meter
+    int32_t  Y_RESOLUTION_PPM;
+    uint32_t USED_COLOR_COUNT;
+    uint32_t IMPORTANT_COLOR_COUNT;
 } BMP_INFO_HEADER;
 
 typedef struct __attribute__((packed)) {
-    unsigned char BLUE;
-    unsigned char GREEN;
-    unsigned char RED;
-    unsigned char RESERVED;
+    uint8_t BLUE;
+    uint8_t GREEN;
+    uint8_t RED;
+    uint8_t RESERVED;
 } PALETTE;
 
-extern int (*bPPs[6])(int, signed int, unsigned char*, PALETTE*, FILE*);
+extern int (*bPPs[6])(uint64_t, int32_t, uint8_t*, PALETTE*, FILE*);
 
 void handleError(const char* string, int nFile, int nAlloc, int total, ...);
 
+int isSupported(BMP_FILE_HEADER* BFH, BMP_INFO_HEADER* BIH);
+
 int TO_ASCII(BMP_FILE_HEADER* BFH, BMP_INFO_HEADER* BIH, PALETTE* COLOR_TABLE,
              FILE* BMP_FILE, FILE* TEXT_FILE,
-             int (*f)(int, signed int, unsigned char*, PALETTE*, FILE*));
+             int (*f)(uint64_t, int32_t, uint8_t*, PALETTE*, FILE*));
 
-int  bPP_1(int bPR, signed int WIDTH, unsigned char* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
-int  bPP_4(int bPR, signed int WIDTH, unsigned char* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
-int  bPP_8(int bPR, signed int WIDTH, unsigned char* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
-int bPP_16(int bPR, signed int WIDTH, unsigned char* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
-int bPP_24(int bPR, signed int WIDTH, unsigned char* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
-int bPP_32(int bPR, signed int WIDTH, unsigned char* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
+int  bPP_1(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
+int  bPP_4(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
+int  bPP_8(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
+int bPP_16(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
+int bPP_24(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
+int bPP_32(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE);
 
 #endif
