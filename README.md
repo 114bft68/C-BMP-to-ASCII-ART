@@ -7,7 +7,7 @@ it works with **uncompressed BMP files** which have bit depths *(bits per pixel)
 - 1 (tested)
 - 4 (tested)
 - 8 (tested)
-- 16 *(untested)*
+- 16 (tested)
 - 24 (tested)
 - 32 *(untested)*
 
