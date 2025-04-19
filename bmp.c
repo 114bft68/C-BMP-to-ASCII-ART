@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <inttypes.h>
 #include "bmpLib.h"
 
 #define CYAN "\x1B[36m"
@@ -88,7 +89,13 @@ int main(int argc, char *argv[]) {
     
     handleError("", 2, 1, 3, BMP_FILE, TEXT_FILE, COLOR_TABLE); // closing files before exiting (not error handling)
 
-    printf("\n- Success -\nPrinted the ASCII art to the file at %s%s%s\nImage Width: %s%d%s\nImage height: %s%d%s\nImage bPP: %s%d%s\n",
+    printf("\n- Success -\nPrinted the ASCII art to the file at %s%s%s\nImage Width: %s%"
+           PRId32
+           "%s\nImage height: %s%"
+           PRId32
+           "%s\nImage bPP: %s%"
+           PRIu16
+           "%s\n",
            CYAN, argv[2], NORM, CYAN, I_H.IMAGE_WIDTH, NORM, CYAN, I_H.IMAGE_HEIGHT, NORM, CYAN, I_H.BITS_PER_PIXEL, NORM);
 
     return 0;

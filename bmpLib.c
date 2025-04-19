@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdarg.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include "bmpLib.h"
 
 const char CHARS[] = " .-_!()^*%&#$@";     // dark mode  --> space is the darkest
@@ -18,7 +18,7 @@ const char CHARS[] = " .-_!()^*%&#$@";     // dark mode  --> space is the darkes
     _x > _y ? _x : _y; \
 })
 
-int (*bPPs[6])(uint64_t, int32_t, uint8_t*, PALETTE*, FILE*) = {bPP_1, bPP_4, bPP_8, bPP_16, bPP_24, bPP_32};
+int (*bPPs[6])(uint64_t, int32_t, uint8_t*, PALETTE*, FILE*, uint32_t) = {bPP_1, bPP_4, bPP_8, bPP_16, bPP_24, bPP_32};
 
 void handleError(const char* string, int nFile, int nAlloc, int total, ...) {
 /*****************************************************************************************************************\
@@ -57,12 +57,13 @@ int isSupported(BMP_FILE_HEADER* BFH, BMP_INFO_HEADER* BIH) {
         BIH->IMAGE_HEIGHT != 0                 && // height is not 0
         BIH->IMAGE_WIDTH > 0                   && // width <= 0 (a negative height flips the image vertically but I'm not sure if a negative width flips the image data horizontally)
         bPP_TO_bPPs_INDEX(BIH->BITS_PER_PIXEL) && // if >0 value is returned, the BMP is supported (bPP is either 1, 4, 8, 16, 24, or 32)
-        !BIH->COMPRESSION                       ; // if the BMP is not compressed, !0 (true) is returned (compressed BMPs are not supported)
+        (BIH->COMPRESSION == BI_RGB            || // uncompressed
+        BIH->COMPRESSION == BI_BITFIELDS)       ; // uncompressed but images with 16 bPP under this condition represent colors using the RGB565 format
 }
 
 int TO_ASCII(BMP_FILE_HEADER* BFH, BMP_INFO_HEADER* BIH, PALETTE* COLOR_TABLE,
              FILE* BMP_FILE, FILE* TEXT_FILE,
-             int (*f)(uint64_t, int32_t, uint8_t*, PALETTE*, FILE*)) {
+             int (*f)(uint64_t, int32_t, uint8_t*, PALETTE*, FILE*, uint32_t)) {
 
     uint64_t bPR_NO_PADDING = BIH->BITS_PER_PIXEL * BIH->IMAGE_WIDTH;
     // bits per row without padding
@@ -101,7 +102,7 @@ int TO_ASCII(BMP_FILE_HEADER* BFH, BMP_INFO_HEADER* BIH, PALETTE* COLOR_TABLE,
             return 1;
         }
 
-        if (f(bPR_NO_PADDING, BIH->IMAGE_WIDTH, row, COLOR_TABLE, TEXT_FILE)) {
+        if (f(bPR_NO_PADDING, BIH->IMAGE_WIDTH, row, COLOR_TABLE, TEXT_FILE, BIH->COMPRESSION)) {
             handleError("\nUnable to write into the text file\n", 0, 1, 1, (void*) row);
             return 1;
         }
@@ -125,7 +126,7 @@ int TO_ASCII(BMP_FILE_HEADER* BFH, BMP_INFO_HEADER* BIH, PALETTE* COLOR_TABLE,
     return 0;
 }
 
-int bPP_1(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE) {
+int bPP_1(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION) {
     // 1 bit = 1 PALETTE = 1 pixel
     // bits per row without padding / 8 (truncated if BPR / 8 is a float)
     // traded the aesthetic off for performance
@@ -160,7 +161,7 @@ int bPP_1(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE*
     return 0;
 }
 
-int bPP_4(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE) {
+int bPP_4(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION) {
     // each of the first 4 bits and the last 4 bits represent a PALETTE which = a pixel
     // traded the aesthetic off for performance
     // (the original code achieved the same result with less lines of code but there was an extra if statement being evaluated every iteration)
@@ -196,7 +197,7 @@ int bPP_4(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE*
     return 0;
 }
 
-int bPP_8(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE) {
+int bPP_8(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION) {
     // 1 byte = 1 PALETTE = 1 pixel
     for (int32_t x = 0; x < WIDTH; ++x) {
     
@@ -208,22 +209,25 @@ int bPP_8(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE*
     return 0;
 }
 
-int bPP_16(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE) {
-    // 16 bits = RGB = 1 pixel, the most significant bit is not used: (unused)_(5bitsRed)_(5bitsGreen)_(5bitsBlue)
+int bPP_16(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION) {
+    // 16 bits = RGB = 1 pixel, the most significant bit is not used:
+    // BI_RGB:       (unused)_(5bitsRed)_(5bitsGreen)_(5bitsBlue)
+    // BI_BITFIELDS: (5bitsRed)_(6bitsGreen)_(5bitsBlue)
     for (int32_t x = 0; x < WIDTH; ++x) {
 
-        if (fputc(SELECT_CHAR(
-                             (row[x * 2] >> 2)                                  + // red
-                             (((row[x * 2] << 6) >> 3) + (row[x * 2 + 1] >> 3)) + // green
-                             ((row[x * 2 + 1] << 3) >> 3)                         // blue
-                  ), TEXT_FILE) == EOF) return 1;
+        uint16_t RGB = (row[x * 2] << 8) + row[x * 2 + 1];
 
-    } // messy
+        if (fputc(SELECT_CHAR((COMPRESSION == BI_RGB ?
+                               (((RGB && 0x7C00) >> 10) + ((RGB & 0x3E0) >> 5) + (RGB & 0x1F))
+                               :
+                               (((RGB & 0xF800) >> 11) + ((RGB & 0x7E0) >> 5) + (RGB & 0x1F))
+                             )), TEXT_FILE) == EOF) return 1; // messy
+    }
 
     return 0;
 }
 
-int bPP_24(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE) {
+int bPP_24(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION) {
     // 3 btyes = BGR = a pixel
     for (int32_t x = 0; x < WIDTH; ++x) {
 
@@ -234,9 +238,10 @@ int bPP_24(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE
     return 0;
 }
 
-int bPP_32(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE) {
+int bPP_32(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION) {
     // 4 bytes = blue, green, red, and alpha = a pixel
-    // I'm treating transparency as a color component like R/ G/ B (it sounds like a good idea to me)
+    // apparently under the compression BI_BITFIELDS, the color table contains color masks that help identify what value corresponds to what color,
+    // however only the values matter in this case
     for (int32_t x = 0; x < WIDTH; ++x) {
  
         if (fputc(SELECT_CHAR(row[x * 4] + row[x * 4 + 1] + row[x * 4 + 2] + row[x * 4 + 3]), TEXT_FILE) == EOF) return 1;
