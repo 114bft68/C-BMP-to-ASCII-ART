@@ -2,6 +2,9 @@
 #define BMP_LIB
 #include <inttypes.h>
 
+#define bPP_PARAMETERS      (uint64_t bPR, int32_t WIDTH, uint8_t *row, PALETTE *COLOR_TABLE, FILE *TEXT_FILE, uint32_t COMPRESSION)
+#define bPP_TYPE_PARAMETERS (uint64_t, int32_t, uint8_t*, PALETTE*, FILE*, uint32_t)
+
 #define bPP_TO_bPPs_INDEX(bpp)         \
     _Generic(bpp,                      \
         uint16_t: bpp ==  1 ? 1 :      \
@@ -43,33 +46,36 @@ typedef struct __attribute__((packed)) {
     uint8_t RESERVED;
 } PALETTE;
 
-enum COMPRESSION_METHODS { // global identifiers
-  BI_RGB       = 0x0000,   // uncompressed
-  BI_RLE8      = 0x0001,
-  BI_RLE4      = 0x0002,
-  BI_BITFIELDS = 0x0003,   // uncompressed, affects 16bpp (not RGB555 but RGB565) and 32bpp (unknown...)
-  BI_JPEG      = 0x0004,
-  BI_PNG       = 0x0005,
-  BI_CMYK      = 0x000B,
-  BI_CMYKRLE8  = 0x000C,
-  BI_CMYKRLE4  = 0x000D
+enum COMPRESSION_METHODS   // global identifiers
+{
+    BI_RGB       = 0x0000, // uncompressed
+    BI_RLE8      = 0x0001,
+    BI_RLE4      = 0x0002,
+    BI_BITFIELDS = 0x0003, // uncompressed, affects 16bpp (not RGB555 but RGB565) and 32bpp (color masks to identify colors)
+    BI_JPEG      = 0x0004,
+    BI_PNG       = 0x0005,
+    BI_CMYK      = 0x000B,
+    BI_CMYKRLE8  = 0x000C,
+    BI_CMYKRLE4  = 0x000D
 };
 
-void handleError(const char* string, int nFile, int nAlloc, int total, ...);
+void cleanup(const char *string, int nFile, int nAlloc, int total, ...);
 
-int isSupported(BMP_FILE_HEADER* BFH, BMP_INFO_HEADER* BIH);
+#define safer_exit(...) { cleanup(__VA_ARGS__); return 1; }
 
-int TO_ASCII(BMP_FILE_HEADER* BFH, BMP_INFO_HEADER* BIH, PALETTE* COLOR_TABLE,
-             FILE* BMP_FILE, FILE* TEXT_FILE,
-             int (*f)(uint64_t, int32_t, uint8_t*, PALETTE*, FILE*, uint32_t));
+int isSupported(BMP_FILE_HEADER *BFH, BMP_INFO_HEADER *BIH);
 
-int  bPP_1(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION);
-int  bPP_4(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION);
-int  bPP_8(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION);
-int bPP_16(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION);
-int bPP_24(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION);
-int bPP_32(uint64_t bPR, int32_t WIDTH, uint8_t* row, PALETTE* COLOR_TABLE, FILE* TEXT_FILE, uint32_t COMPRESSION);
+int TO_ASCII(BMP_FILE_HEADER *BFH, BMP_INFO_HEADER *BIH, PALETTE *COLOR_TABLE,
+             FILE *BMP_FILE, FILE *TEXT_FILE,
+             int (*f) bPP_TYPE_PARAMETERS);
 
-extern int (*bPPs[6])(uint64_t, int32_t, uint8_t*, PALETTE*, FILE*, uint32_t);
+int  bPP_1 bPP_PARAMETERS;
+int  bPP_4 bPP_PARAMETERS;
+int  bPP_8 bPP_PARAMETERS;
+int bPP_16 bPP_PARAMETERS;
+int bPP_24 bPP_PARAMETERS;
+int bPP_32 bPP_PARAMETERS;
+
+extern int (*bPPs[6]) bPP_TYPE_PARAMETERS;
 
 #endif
