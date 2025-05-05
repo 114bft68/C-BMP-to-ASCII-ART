@@ -12,12 +12,6 @@ const char CHARS[] = " .-_!()^*%&#$@";     // dark mode  --> space is the darkes
 #define CHARS_LEN strlen(CHARS)
 #define SELECT_CHAR(sum) CHARS[((int) round((double) ((sum) / 765.0 * (CHARS_LEN - 1))))]
 
-#define min(x, y) ({   \
-    typeof(x) _x = x;  \
-    typeof(y) _y = y;  \
-    _x > _y ? _x : _y; \
-})
-
 int (*bPPs[6]) bPP_TYPE_PARAMETERS = { bPP_1, bPP_4, bPP_8, bPP_16, bPP_24, bPP_32 };
 
 void cleanup(const char *string, int nFile, int nAlloc, int total, ...)
@@ -213,7 +207,7 @@ int bPP_16 bPP_PARAMETERS
     // BI_BITFIELDS: (5bitsRed)_(6bitsGreen)_(5bitsBlue)
     for (int32_t x = 0; x < WIDTH; ++x)
     {
-        uint16_t RGB = (row[x * 2] << 8) + row[x * 2 + 1];
+        uint16_t RGB = ((uint16_t) row[x * 2] << 8) + row[x * 2 + 1];
 
         if (fputc(SELECT_CHAR((COMPRESSION == BI_RGB ?
                                (((RGB && 0x7C00) >> 10) + ((RGB & 0x3E0) >> 5) + (RGB & 0x1F))
