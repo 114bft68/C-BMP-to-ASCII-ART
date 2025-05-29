@@ -6,9 +6,9 @@
 #include <inttypes.h>
 #include "bmpLib.h"
 
-const char CHARS[] = " .-_!()^*%&#$@";     // dark mode  --> space is the darkest
-// const char CHARS[] = "@$#&%*^)(!_-. ";  // light mode --> space is the brightest
-// const char CHARS[] = ".'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+const char *CHARS = " .-_!()^*%&#$@";     // dark mode  --> space is the darkest
+// const char *CHARS = "@$#&%*^)(!_-. ";  // light mode --> space is the brightest
+// const char *CHARS = ".'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
 #define CHARS_LEN strlen(CHARS)
 #define SELECT_CHAR(sum) CHARS[((int) round((double) ((sum) / 765.0 * (CHARS_LEN - 1))))]
 
@@ -127,27 +127,15 @@ int TO_ASCII(BMP_FILE_HEADER *BFH, BMP_INFO_HEADER *BIH, PALETTE *COLOR_TABLE,
 int bPP_1 bPP_PARAMETERS
 {
     // 1 bit = 1 PALETTE = 1 pixel
-    // bits per row without padding / 8 (truncated if BPR / 8 is a float)
-    // traded the aesthetic off for performance
-    // (the original code achieved the same result with less lines of code but there was an extra if statement being evaluated every iteration)
 
-    uint64_t bytesPerRow = (uint64_t) (bPR / 8);  // truncated, not including the remaining bits
+    uint64_t bytesPerRow = (uint64_t) (bPR / 8);
     int remainingBits = bPR % 8;
 
-    for (uint64_t x = 0; x < bytesPerRow; ++x)
+    for (uint64_t x = 0; x <= bytesPerRow; ++x)
     {
-        for (int i = 7; i >= 0; --i)
+        for (int i = 7; i > -1 && (x == bytesPerRow && remainingBits ? remainingBits + i != 8 : 1); --i)
         {
             PALETTE BGR = COLOR_TABLE[(row[x] & (1 << i)) > 0 ? 1 : 0];
-            if (fputc(SELECT_CHAR(BGR.BLUE + BGR.GREEN + BGR.RED), TEXT_FILE) == EOF) return 1;
-        }
-    }
-
-    if (remainingBits) // handling the remaining bit(s) (if they exist)
-    {
-        for (int i = remainingBits; i >= 0; --i)
-        {
-            PALETTE BGR = COLOR_TABLE[(row[bytesPerRow] & (1 << i)) > 0 ? 1 : 0];
             if (fputc(SELECT_CHAR(BGR.BLUE + BGR.GREEN + BGR.RED), TEXT_FILE) == EOF) return 1;
         }
     }
@@ -158,8 +146,6 @@ int bPP_1 bPP_PARAMETERS
 int bPP_4 bPP_PARAMETERS
 {
     // each of the first 4 bits and the last 4 bits represent a PALETTE which = a pixel
-    // traded the aesthetic off for performance
-    // (the original code achieved the same result with less lines of code but there was an extra if statement being evaluated every iteration)
 
     uint64_t bytesPerRow = (uint64_t) (bPR / 8);
 
