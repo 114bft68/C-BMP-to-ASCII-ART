@@ -2,6 +2,14 @@
 #define BMP_LIB
 #include <inttypes.h>
 
+#define DARK_CHARS  " .-_!()^*%&#$@" // dark mode  --> space is the darkest
+#define LIGHT_CHARS "@$#&%*^)(!_-. " // light mode --> space is the brightest
+
+extern const char *CHARS; // default
+
+#define CHARS_LEN strlen(DARK_CHARS)
+#define SELECT_CHAR(sum) CHARS[((int) round((double) ((sum) / 765.0 * (CHARS_LEN - 1))))]
+
 #define bPP_PARAMETERS      (uint64_t bPR, int32_t WIDTH, uint8_t *row, PALETTE *COLOR_TABLE, FILE *TEXT_FILE, uint32_t COMPRESSION)
 #define bPP_TYPE_PARAMETERS (uint64_t, int32_t, uint8_t*, PALETTE*, FILE*, uint32_t)
 
@@ -51,7 +59,7 @@ enum COMPRESSION_METHODS   // global identifiers
     BI_RGB       = 0x0000, // uncompressed
     BI_RLE8      = 0x0001,
     BI_RLE4      = 0x0002,
-    BI_BITFIELDS = 0x0003, // uncompressed, affects 16bpp (not RGB555 but RGB565) and 32bpp (color masks to identify colors)
+    BI_BITFIELDS = 0x0003, // uncompressed, affects 16bpp (RGB555 or RGB565) and 32bpp (color masks to identify colors)
     BI_JPEG      = 0x0004,
     BI_PNG       = 0x0005,
     BI_CMYK      = 0x000B,
@@ -59,19 +67,25 @@ enum COMPRESSION_METHODS   // global identifiers
     BI_CMYKRLE4  = 0x000D
 };
 
-void cleanup(const char *string, int nFile, int nAlloc, int total, ...);
+void cleanup(int printe, const char *string, int nFile, int nAlloc, int total, ...);
 
 #define safer_exit(...) { cleanup(__VA_ARGS__); return 1; }
 
+static inline void lightChars(int n)
+{
+    if (n) CHARS = LIGHT_CHARS;
+}
+ 
 int isSupported(BMP_FILE_HEADER *BFH, BMP_INFO_HEADER *BIH);
 
 int TO_ASCII(BMP_FILE_HEADER *BFH, BMP_INFO_HEADER *BIH, PALETTE *COLOR_TABLE,
              FILE *BMP_FILE, FILE *TEXT_FILE,
              int (*f) bPP_TYPE_PARAMETERS);
 
-int  bPP_1 bPP_PARAMETERS;
-int  bPP_4 bPP_PARAMETERS;
-int  bPP_8 bPP_PARAMETERS;
+#define UNUSED(x) (void) x
+int bPP_1  bPP_PARAMETERS;
+int bPP_4  bPP_PARAMETERS;
+int bPP_8  bPP_PARAMETERS;
 int bPP_16 bPP_PARAMETERS;
 int bPP_24 bPP_PARAMETERS;
 int bPP_32 bPP_PARAMETERS;

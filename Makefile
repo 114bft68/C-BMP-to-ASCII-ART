@@ -7,7 +7,7 @@ testBMPs     = $(notdir $(wildcard ./bmps/*.bmp) $(wildcard ./bmps/*.BMP))
 parentDir    = $(shell pwd)
 
 $(executable): $(sourcesC) bmpLib.h
-	gcc $(sourcesC) -o $(executable) -lm -Wall
+	gcc $(sourcesC) -o $(executable) -lm -Wall -Wextra -pedantic-errors
 
 bta: # bmps to ascii arts (files for testing)
 	@$(foreach testBMP,\
